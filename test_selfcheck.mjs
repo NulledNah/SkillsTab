@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, existsSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { scanSkills, toggleSkill, parseSkillFile, withLinks } from "./skills-scan.mjs";
+import { scanSkills, toggleSkill, parseSkillFile, withLinks, setLink } from "./skills-scan.mjs";
 
 function skillFile(dir, name, body) {
   mkdirSync(join(dir, name), { recursive: true });
@@ -47,6 +47,9 @@ function run() {
     assert.deepEqual(linked.find((s) => s.name === "alpha").mcp, ["rea"]);
     assert.deepEqual(linked.find((s) => s.name === "beta").mcp, []);
     assert.deepEqual(withLinks(skills, undefined).find((s) => s.name === "alpha").mcp, []);
+    assert.deepEqual(setLink(["rea"], "playwright", true), ["playwright", "rea"]);
+    assert.deepEqual(setLink(["rea"], "rea", false), []);
+    assert.deepEqual(setLink(undefined, "rea", true), ["rea"]);
 
     const alpha = skills.find((s) => s.name === "alpha");
     const paused = toggleSkill(skills, alpha.path);

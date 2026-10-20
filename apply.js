@@ -62,17 +62,21 @@ const LOADER_APPEND =
   'try { await import("./skills-main.js"); } catch (e) { /* skills addon not installed */ }\n';
 
 const POPOVER_TEMPLATES = `/* oc-skills-tab */
-var _tmpl$skills = /* @__PURE__ */ template('<button type=button class="flex items-center gap-2 w-full min-h-8 pl-3 pr-2 py-1 rounded-md hover:bg-surface-raised-base-hover transition-colors text-left"><div></div><span class="flex flex-col min-w-0 flex-1"><span class="flex items-center gap-2 min-w-0"><span class="text-14-regular truncate"></span><span data-skill-mcp class="text-11-regular text-text-weak truncate"></span></span></span><div></div></button>'), _tmpl$restart = /* @__PURE__ */ template('<div class="flex items-center justify-between gap-2 mt-3 pt-2 border-t border-border-weak-base"><span class="text-12-regular text-text-weak">Riavvia per applicare la skill.</span><button type=button class="text-12-regular text-text-base hover:underline">Riavvia</button></div>');
+var _tmpl$skills = /* @__PURE__ */ template('<div class="flex flex-col"><button type=button class="flex items-center gap-2 w-full min-h-8 pl-3 pr-2 py-1 rounded-md hover:bg-surface-raised-base-hover transition-colors text-left"><div></div><span class="flex flex-col min-w-0 flex-1"><span class="flex items-center gap-2 min-w-0"><span class="text-14-regular truncate"></span><span data-skill-mcp class="text-11-regular text-text-weak truncate"></span></span></span><span data-skill-link class="text-11-regular text-text-weak shrink-0 hover:underline">MCP</span><div></div></button><div data-skill-links class="flex flex-col gap-1 px-3 pb-2" style="display:none"></div></div>'), _tmpl$mcp = /* @__PURE__ */ template('<div class="flex items-center justify-between gap-2 min-h-7 pl-2 pr-1 rounded-md hover:bg-surface-raised-base-hover cursor-pointer"><span class="text-12-regular text-text-base truncate"></span><div></div></div>'), _tmpl$restart = /* @__PURE__ */ template('<div class="flex items-center justify-between gap-2 mt-3 pt-2 border-t border-border-weak-base"><span class="text-12-regular text-text-weak">Riavvia per applicare la skill.</span><button type=button class="text-12-regular text-text-base hover:underline">Riavvia</button></div>');
 
 `;
 
 const POPOVER_COMPONENTS = `function SkillRow(props) {
-  var _el$ = _tmpl$skills(), _dot = _el$.firstChild, _label = _dot.nextSibling, _line = _label.firstChild, _name = _line.firstChild, _badge = _name.nextSibling, _box = _label.nextSibling;
+  var _wrap = _tmpl$skills(), _el$ = _wrap.firstChild, _dot = _el$.firstChild, _label = _dot.nextSibling, _line = _label.firstChild, _name = _line.firstChild, _badge = _name.nextSibling, _link = _label.nextSibling, _box = _link.nextSibling, _editor = _wrap.lastChild;
   _el$.$$click = () => props.onToggle(props.item);
   _box.$$click = (event) => event.stopPropagation();
   _badge.$$click = (event) => {
     event.stopPropagation();
     props.onReconnect(props.item);
+  };
+  _link.$$click = (event) => {
+    event.stopPropagation();
+    _editor.style.display = _editor.style.display === "none" ? "" : "none";
   };
   insert(_name, () => props.item.name);
   insert(_box, createComponent(Switch, {
@@ -81,6 +85,27 @@ const POPOVER_COMPONENTS = `function SkillRow(props) {
     },
     onChange: () => props.onToggle(props.item)
   }));
+  var names = props.mcpNames || [];
+  if (!names.length) {
+    var _empty = _tmpl$7();
+    insert(_empty, () => "Nessun server MCP configurato.");
+    _empty.style.paddingLeft = "8px";
+    _editor.appendChild(_empty);
+  } else {
+    for (const name of names) {
+      var _row = _tmpl$mcp(), _name2 = _row.firstChild, _box2 = _row.lastChild;
+      insert(_name2, name);
+      _box2.$$click = (event) => event.stopPropagation();
+      insert(_box2, createComponent(Switch, {
+        get checked() {
+          return (props.item.mcp || []).indexOf(name) >= 0;
+        },
+        onChange: () => props.onLink(props.item, name)
+      }));
+      _row.$$click = () => props.onLink(props.item, name);
+      _editor.appendChild(_row);
+    }
+  }
   createRenderEffect((_p$) => {
     var _v$ = {
       "size-1.5 rounded-full shrink-0": true,
@@ -101,7 +126,7 @@ const POPOVER_COMPONENTS = `function SkillRow(props) {
     t: void 0,
     n: void 0
   });
-  return _el$;
+  return _wrap;
 }
 
 function SkillsContent(props) {
@@ -155,11 +180,17 @@ function SkillsContent(props) {
                 get mcp() {
                   return props.mcp;
                 },
+                get mcpNames() {
+                  return props.mcpNames;
+                },
                 get onToggle() {
                   return props.onToggle;
                 },
                 get onReconnect() {
                   return props.onReconnect;
+                },
+                get onLink() {
+                  return props.onLink;
                 }
               })
             })];
@@ -230,6 +261,22 @@ const POPOVER_STATE = `  const settings = useSettings();
       if (sync.data.mcp?.[name]?.status !== "connected") toggleMcp.mutate(name);
     }
   };
+  const linkSkill = (item, name) => {
+    const bridge = window.api || {};
+    if (!bridge.skillsLink) return;
+    const linked = (item.mcp || []).indexOf(name) < 0;
+    bridge.skillsLink({ skill: item.name, mcp: name, linked }).then((result) => {
+      if (!result || !result.ok) {
+        setSkillsState("error", "Errore: " + ((result && result.error) || "sconosciuto"));
+        return;
+      }
+      const next = (result.skills || []).find((skill) => skill.name === item.name && skill.dir === item.dir);
+      if (!next) return;
+      const index = skillsState.items.findIndex((skill) => skill.name === item.name && skill.dir === item.dir);
+      if (index >= 0) setSkillsState("items", index, "mcp", next.mcp || []);
+      setSkillsState("error", "");
+    }).catch((error) => setSkillsState("error", "Errore: " + error));
+  };
   createEffect(() => {
     if (props.shown()) loadSkills();
   });`;
@@ -258,11 +305,17 @@ const POPOVER_CONTENT = `
               get mcp() {
                 return sync.data.mcp;
               },
+              get mcpNames() {
+                return mcpNames();
+              },
               get onToggle() {
                 return toggleSkillRow;
               },
               get onReconnect() {
                 return reconnectLinked;
+              },
+              get onLink() {
+                return linkSkill;
               }
             });
           }
@@ -390,13 +443,14 @@ function stripIndex(html) {
 }
 
 function patchPreload(src, add) {
-  src = src.split("\n").filter((line) => !/skills(List|Toggle)\s*:/.test(line)).join("\n");
+  src = src.split("\n").filter((line) => !/skills(List|Toggle|Link)\s*:/.test(line)).join("\n");
   if (!add) return src;
   const needle = 'electron.contextBridge.exposeInMainWorld("api", api)';
   if (!src.includes(needle)) throw new Error("preload: punto di innesto non trovato");
   const inject =
     "Object.assign(api,{skillsList:()=>electron.ipcRenderer.invoke(\"skills-list\")," +
-    "skillsToggle:(p)=>electron.ipcRenderer.invoke(\"skills-toggle\",p)});\n";
+    "skillsToggle:(p)=>electron.ipcRenderer.invoke(\"skills-toggle\",p)," +
+    "skillsLink:(p)=>electron.ipcRenderer.invoke(\"skills-link\",p)});\n";
   return src.replace(needle, inject + needle);
 }
 

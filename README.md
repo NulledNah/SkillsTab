@@ -22,7 +22,7 @@ the model context.
   skill shows a `MCP <name> off` badge: click it to reconnect. The MCP tab
   toggle stays runtime-only; no config file is rewritten.
 
-Current links:
+Bundled defaults (`links.json`):
 
 ```json
 {
@@ -33,6 +33,19 @@ Current links:
 
 `context7-mcp` is not linked because no `context7` server is configured.
 `ghidra-mcp` is unrelated to REA (REA uses its own Ghidra install).
+
+### Link from the UI
+
+Click the `MCP` label on a skill row: a small panel opens with every configured
+MCP server. Toggle the ones you want; changes are saved immediately, no restart
+needed (they affect the cascade and the badge, not the model context).
+
+User overrides are stored in:
+
+    %APPDATA%\ai.opencode.desktop\skills-links.json
+
+The bundled `links.json` stays as the default; a user entry for a skill
+replaces the default list for that skill. Delete the user file to reset.
 
 Version 1.1 replaces the first DOM-injection version. Running `install` also
 strips the old `skills-panel.js` injection and deletes the old file.
@@ -74,6 +87,6 @@ re-run the installers of the other addons).
 - `apply.js` - installer (install / remove / restore-all / status / verify).
 - `skills-scan.mjs` - discovery and toggle logic, testable standalone.
 - `skills-main.js` - main-process IPC (`skills-list`, `skills-toggle`).
-- `links.json` - skill to MCP server mapping.
+- `links.json` - default skill to MCP server mapping (overridable from the UI).
 - `test_selfcheck.mjs` - runnable check: `node test_selfcheck.mjs`.
 - `VERSION` - addon version.

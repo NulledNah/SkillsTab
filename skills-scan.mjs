@@ -117,6 +117,13 @@ export function scanSkills(roots) {
     .sort((a, b) => a.name.localeCompare(b.name) || a.path.localeCompare(b.path));
 }
 
+export function setLink(current, mcp, linked) {
+  const names = new Set((current || []).filter((name) => typeof name === "string"));
+  if (linked) names.add(mcp);
+  else names.delete(mcp);
+  return [...names].sort();
+}
+
 export function withLinks(skills, links) {
   return skills.map((skill) => ({
     ...skill,
