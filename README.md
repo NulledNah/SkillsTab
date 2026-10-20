@@ -45,7 +45,7 @@ OpenCode updates replace `app.asar`: run `install` again after every update.
 
 - Project-local skills (`.opencode/skills`) and custom `skills.paths` are not
   listed.
-- Duplicate skill names are shown separately; the server keeps the last loader.
+- Duplicate skill names are shown separately; the server keeps the last loaded.
 - Links to MCP servers that are not configured are ignored.
 - If an OpenCode update changes the popover chunk, `install` fails with a clear
   error instead of writing a broken bundle.
