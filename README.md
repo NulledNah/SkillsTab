@@ -4,6 +4,14 @@ Adds a **Skills** tab to the OpenCode desktop status popover (next to Servers,
 MCP, LSP, Plugins). Every installed skill has a switch: enable/disable it for
 the model context.
 
+## Before / after
+
+<p align="center">
+  <img src="img/pre.png" width="300" alt="Pannello prima: tab Servers, MCP, LSP, Plugins">
+  &nbsp;&nbsp;→&nbsp;&nbsp;
+  <img src="img/post.png" width="300" alt="Pannello dopo: tab Skills con gli switch per ogni skill">
+</p>
+
 ## How it works
 
 - `skills-scan.mjs` scans the same global/external skill roots opencode uses:
