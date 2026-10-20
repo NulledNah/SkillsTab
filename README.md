@@ -44,8 +44,8 @@ ignored: no badge and no connect attempt.
 `context7-mcp` is not linked because no `context7` server is configured.
 `ghidra-mcp` is unrelated to REA (REA uses its own Ghidra install).
 
-The bottom of the Skills tab shows the installed `VERSION`, using the same
-muted 11px style as the DeepSeek panel.
+The bottom of the Skills tab shows the installed version centered, prefixed
+with `v` (e.g. `v1.3.2`), in a muted 11px gray (`#8a8a8a`).
 
 Version 1.1 replaces the first DOM-injection version. Running `install` also
 strips the old `skills-panel.js` injection and deletes the old file.
