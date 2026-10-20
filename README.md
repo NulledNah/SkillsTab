@@ -6,15 +6,9 @@ the model context.
 
 ## Before / after
 
-<div align="center">
-  <table>
-    <tr>
-      <td valign="middle"><img src="img/pre.png" width="300" alt="Pannello prima: tab Servers, MCP, LSP, Plugins"></td>
-      <td valign="middle">&nbsp;&nbsp;→&nbsp;&nbsp;</td>
-      <td valign="middle"><img src="img/post.png" width="300" alt="Pannello dopo: tab Skills con gli switch per ogni skill"></td>
-    </tr>
-  </table>
-</div>
+<p align="center">
+  <img src="img/before-after.png" width="640" alt="Pannello prima e dopo: tab Skills con gli switch per ogni skill">
+</p>
 
 ## How it works
 
