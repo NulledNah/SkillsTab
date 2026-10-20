@@ -28,8 +28,8 @@ file manually).
 
 ### Link from the UI
 
-Click the `MCP` label on a skill row: a small panel opens with every configured
-MCP server. Toggle the ones you want; changes are saved immediately, no restart
+Click the `MCP ▾` chip next to the skill name: a small panel opens with every
+configured MCP server. Toggle the ones you want; changes are saved immediately, no restart
 needed (they affect the cascade and the badge, not the model context).
 
 User links are stored in:
