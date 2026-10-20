@@ -32,7 +32,8 @@ Click a skill row (or the `▾` to the right of its name): the row expands into 
 "Linked MCP:" panel with every configured MCP server. Toggle the ones you
 want; changes are saved immediately, no restart needed (they affect the
 cascade and the badge, not the model context). The switch at the right is the
-skill on/off; clicking the row no longer toggles the skill.
+skill on/off; clicking the row no longer toggles the skill. The skill name keeps
+the same text color when off; only the status dot and the switch change.
 
 UI strings are localized with the same method as the DeepSeek panel: system
 language first, then the app language, English fallback (it/en).

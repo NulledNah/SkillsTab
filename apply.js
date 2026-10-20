@@ -62,7 +62,7 @@ const LOADER_APPEND =
   'try { await import("./skills-main.js"); } catch (e) { /* skills addon not installed */ }\n';
 
 const POPOVER_TEMPLATES = `/* oc-skills-tab */
-var _tmpl$skills = /* @__PURE__ */ template('<div class="flex flex-col"><button type=button class="flex items-center gap-2 w-full min-h-8 pl-3 pr-2 py-1 rounded-md hover:bg-surface-raised-base-hover transition-colors text-left"><div></div><span class="flex flex-col min-w-0 flex-1"><span class="flex items-center gap-2 min-w-0"><span class="text-14-regular truncate"></span><span data-skill-mcp class="text-11-regular text-text-weak truncate"></span><span data-skill-caret class="shrink-0 text-text-weak" style="font-size:10px;line-height:1;transition:transform .15s">▾</span></span></span><div></div></button><div data-skill-links class="flex flex-col gap-1 px-3 pb-2" style="display:none"></div></div>'), _tmpl$mcp = /* @__PURE__ */ template('<div class="flex items-center justify-between gap-2 min-h-7 pl-2 pr-1 rounded-md hover:bg-surface-raised-base-hover cursor-pointer"><span class="text-12-regular text-text-base truncate"></span><div></div></div>'), _tmpl$mcphead = /* @__PURE__ */ template('<div class="text-11-regular text-text-weaker px-2 pt-1"></div>'), _tmpl$version = /* @__PURE__ */ template('<div class="flex justify-center pt-2" style="color:#8a8a8a;font-size:11px;font-variant-numeric:tabular-nums;letter-spacing:.02em">v__SKILLS_VERSION__</div>'), _tmpl$restart = /* @__PURE__ */ template('<div class="flex items-center justify-between gap-2 mt-3 pt-2 border-t border-border-weak-base"><span class="text-12-regular text-text-weak">Riavvia per applicare la skill.</span><button type=button class="text-12-regular text-text-base hover:underline">Riavvia</button></div>');
+var _tmpl$skills = /* @__PURE__ */ template('<div class="flex flex-col"><button type=button class="flex items-center gap-2 w-full min-h-8 pl-3 pr-2 py-1 rounded-md hover:bg-surface-raised-base-hover transition-colors text-left"><div></div><span class="flex flex-col min-w-0 flex-1"><span class="flex items-center gap-2 min-w-0"><span class="text-14-regular text-text-base truncate"></span><span data-skill-mcp class="text-11-regular text-text-weak truncate"></span><span data-skill-caret class="shrink-0 text-text-weak" style="font-size:10px;line-height:1;transition:transform .15s">▾</span></span></span><div></div></button><div data-skill-links class="flex flex-col gap-1 px-3 pb-2" style="display:none"></div></div>'), _tmpl$mcp = /* @__PURE__ */ template('<div class="flex items-center justify-between gap-2 min-h-7 pl-2 pr-1 rounded-md hover:bg-surface-raised-base-hover cursor-pointer"><span class="text-12-regular text-text-base truncate"></span><div></div></div>'), _tmpl$mcphead = /* @__PURE__ */ template('<div class="text-11-regular text-text-weaker px-2 pt-1"></div>'), _tmpl$version = /* @__PURE__ */ template('<div class="flex justify-center pt-2" style="color:#8a8a8a;font-size:11px;font-variant-numeric:tabular-nums;letter-spacing:.02em">v__SKILLS_VERSION__</div>'), _tmpl$restart = /* @__PURE__ */ template('<div class="flex items-center justify-between gap-2 mt-3 pt-2 border-t border-border-weak-base"><span class="text-12-regular text-text-weak">Riavvia per applicare la skill.</span><button type=button class="text-12-regular text-text-base hover:underline">Riavvia</button></div>');
 
 `;
 
@@ -160,18 +160,13 @@ function SkillRow(props) {
       "bg-border-weak-base": !props.item.enabled
     };
     _p$.t = classList(_dot, _v$, _p$.t);
-    _p$.n = classList(_name, {
-      "text-text-base": props.item.enabled,
-      "text-text-weak": !props.item.enabled
-    }, _p$.n);
     var off = (props.item.mcp || []).filter((name) => props.mcp?.[name] && props.mcp[name].status !== "connected");
     var text = props.item.enabled && off.length ? t("mcp_off").replace("{names}", off.join(", ")) : "";
     _badge.textContent = text;
     _badge.title = text ? t("reconnect_hint") : "";
     return _p$;
   }, {
-    t: void 0,
-    n: void 0
+    t: void 0
   });
   return _wrap;
 }
