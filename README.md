@@ -1,4 +1,4 @@
-# Skills panel
+# SkillsTab
 
 Adds a **Skills** tab to the OpenCode desktop status popover (next to Servers,
 MCP, LSP, Plugins). Every installed skill has a switch: enable/disable it for
@@ -42,7 +42,7 @@ Version 1.2 adds `links.json`, the skill → MCP cascade and the reconnect badge
 
 Close OpenCode first (the patch writes `resources/app.asar`).
 
-    cd "Skills panel plugin"
+    cd SkillsTab
     node apply.js install
 
 or double-click `installa.bat`.

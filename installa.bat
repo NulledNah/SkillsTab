@@ -1,7 +1,7 @@
 @echo off
 setlocal
 echo.
-echo  Skills panel - installazione
+echo  SkillsTab - installazione
 echo  Chiudi OpenCode. Questo installer attende la chiusura, applica la patch
 echo  e riapre l'app automaticamente.
 echo.

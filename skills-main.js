@@ -1,5 +1,5 @@
 /*
- * Skills panel - main process module for the OpenCode desktop addon.
+ * SkillsTab - main process module for the OpenCode desktop addon.
  *
  * Loaded by the shared out/main/oc-addons.js entry (see apply.js). Registers:
  *
