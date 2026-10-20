@@ -62,7 +62,7 @@ const LOADER_APPEND =
   'try { await import("./skills-main.js"); } catch (e) { /* skills addon not installed */ }\n';
 
 const POPOVER_TEMPLATES = `/* oc-skills-tab */
-var _tmpl$skills = /* @__PURE__ */ template('<div class="flex flex-col"><button type=button class="flex items-center gap-2 w-full min-h-8 pl-3 pr-2 py-1 rounded-md hover:bg-surface-raised-base-hover transition-colors text-left"><div></div><span class="flex flex-col min-w-0 flex-1"><span class="flex items-center gap-2 min-w-0"><span class="text-14-regular truncate"></span><span data-skill-mcp class="text-11-regular text-text-weak truncate"></span></span></span><span data-skill-link class="text-11-regular text-text-weak shrink-0 hover:underline">MCP</span><div></div></button><div data-skill-links class="flex flex-col gap-1 px-3 pb-2" style="display:none"></div></div>'), _tmpl$mcp = /* @__PURE__ */ template('<div class="flex items-center justify-between gap-2 min-h-7 pl-2 pr-1 rounded-md hover:bg-surface-raised-base-hover cursor-pointer"><span class="text-12-regular text-text-base truncate"></span><div></div></div>'), _tmpl$restart = /* @__PURE__ */ template('<div class="flex items-center justify-between gap-2 mt-3 pt-2 border-t border-border-weak-base"><span class="text-12-regular text-text-weak">Riavvia per applicare la skill.</span><button type=button class="text-12-regular text-text-base hover:underline">Riavvia</button></div>');
+var _tmpl$skills = /* @__PURE__ */ template('<div class="flex flex-col"><button type=button class="flex items-center gap-2 w-full min-h-8 pl-3 pr-2 py-1 rounded-md hover:bg-surface-raised-base-hover transition-colors text-left"><div></div><span class="flex flex-col min-w-0 flex-1"><span class="flex items-center gap-2 min-w-0"><span class="text-14-regular truncate"></span><span data-skill-mcp class="text-11-regular text-text-weak truncate"></span></span></span><span data-skill-link class="text-11-regular text-text-weak shrink-0 hover:underline">MCP</span><div></div></button><div data-skill-links class="flex flex-col gap-1 px-3 pb-2" style="display:none"></div></div>'), _tmpl$mcp = /* @__PURE__ */ template('<div class="flex items-center justify-between gap-2 min-h-7 pl-2 pr-1 rounded-md hover:bg-surface-raised-base-hover cursor-pointer"><span class="text-12-regular text-text-base truncate"></span><div></div></div>'), _tmpl$version = /* @__PURE__ */ template('<div class="flex justify-end pt-2 text-11-regular text-text-weak" style="color:var(--text-weak,#8f8f8f);font-size:11px;font-variant-numeric:tabular-nums;letter-spacing:.02em">__SKILLS_VERSION__</div>'), _tmpl$restart = /* @__PURE__ */ template('<div class="flex items-center justify-between gap-2 mt-3 pt-2 border-t border-border-weak-base"><span class="text-12-regular text-text-weak">Riavvia per applicare la skill.</span><button type=button class="text-12-regular text-text-base hover:underline">Riavvia</button></div>');
 
 `;
 
@@ -117,7 +117,7 @@ const POPOVER_COMPONENTS = `function SkillRow(props) {
       "text-text-base": props.item.enabled,
       "text-text-weak": !props.item.enabled
     }, _p$.n);
-    var off = (props.item.mcp || []).filter((name) => props.mcp?.[name]?.status !== "connected");
+    var off = (props.item.mcp || []).filter((name) => props.mcp?.[name] && props.mcp[name].status !== "connected");
     var text = props.item.enabled && off.length ? "MCP " + off.join(", ") + " off" : "";
     _badge.textContent = text;
     _badge.title = text ? "Clicca per riconnettere" : "";
@@ -212,6 +212,7 @@ function SkillsContent(props) {
         })();
       }
     }));
+    insert(_inner, _tmpl$version());
     return _el$;
   })();
 }
@@ -252,13 +253,16 @@ const POPOVER_STATE = `  const settings = useSettings();
   };
   const syncLinkedMcp = (item, enabled) => {
     for (const name of item.mcp || []) {
-      const connected = sync.data.mcp?.[name]?.status === "connected";
+      const status = sync.data.mcp?.[name]?.status;
+      if (!status) continue;
+      const connected = status === "connected";
       if (connected !== enabled) toggleMcp.mutate(name);
     }
   };
   const reconnectLinked = (item) => {
     for (const name of item.mcp || []) {
-      if (sync.data.mcp?.[name]?.status !== "connected") toggleMcp.mutate(name);
+      if (!sync.data.mcp?.[name]) continue;
+      if (sync.data.mcp[name].status !== "connected") toggleMcp.mutate(name);
     }
   };
   const linkSkill = (item, name) => {
@@ -454,6 +458,16 @@ function patchPreload(src, add) {
   return src.replace(needle, inject + needle);
 }
 
+function panelVersion() {
+  try {
+    const v = fs.readFileSync(path.join(__dirname, "VERSION"), "utf8").trim();
+    if (v) return v;
+  } catch {
+    /* no VERSION file */
+  }
+  return "dev";
+}
+
 function sharedBackup(asar) {
   return asar + SHARED_BACKUP_SUFFIX;
 }
@@ -600,7 +614,10 @@ function install(args) {
   const scanBuf = fs.readFileSync(scanSrc);
   const mainBuf = fs.readFileSync(mainSrc);
   const linksBuf = fs.readFileSync(linksSrc);
-  const chunkBuf = Buffer.from(patchPopover(baseChunk.toString("utf8")), "utf8");
+  const chunkBuf = Buffer.from(
+    patchPopover(baseChunk.toString("utf8")).replace(/__SKILLS_VERSION__/g, panelVersion()),
+    "utf8"
+  );
   const preloadBuf = Buffer.from(patchPreload(preloadRaw.toString("utf8"), true), "utf8");
   const indexBuf = Buffer.from(stripIndex(indexRaw.toString("utf8")), "utf8");
   const pkg = JSON.parse(pkgRaw.toString("utf8"));
@@ -811,6 +828,7 @@ function verify(args) {
   if (!scan || !scan.toString("utf8").includes("scanSkills")) throw new Error("skills-scan.mjs mancante/invalido");
   if (!chunk || !chunk.toString("utf8").includes(CHUNK_MARKER)) throw new Error("chunk popover non patchato");
   if (!chunk.toString("utf8").includes('value: "skills"')) throw new Error("trigger skills mancante");
+  if (chunk.toString("utf8").includes("__SKILLS_VERSION__")) throw new Error("versione non iniettata");
   if (!orig || orig.toString("utf8").includes(CHUNK_MARKER)) throw new Error("backup del chunk mancante o non pristino");
   console.log(
     "verify ok: loader + entry + preload + chunk (" +

@@ -22,17 +22,9 @@ the model context.
   skill shows a `MCP <name> off` badge: click it to reconnect. The MCP tab
   toggle stays runtime-only; no config file is rewritten.
 
-Bundled defaults (`links.json`):
-
-```json
-{
-  "reverse-engineer-anything": ["rea"],
-  "closedloop-ux": ["playwright"]
-}
-```
-
-`context7-mcp` is not linked because no `context7` server is configured.
-`ghidra-mcp` is unrelated to REA (REA uses its own Ghidra install).
+Bundled `links.json` is empty (`{}`): no preconfigured link ships to other
+users. Links are per-user and are created from the UI (or by editing the user
+file manually).
 
 ### Link from the UI
 
@@ -40,12 +32,20 @@ Click the `MCP` label on a skill row: a small panel opens with every configured
 MCP server. Toggle the ones you want; changes are saved immediately, no restart
 needed (they affect the cascade and the badge, not the model context).
 
-User overrides are stored in:
+User links are stored in:
 
     %APPDATA%\ai.opencode.desktop\skills-links.json
 
-The bundled `links.json` stays as the default; a user entry for a skill
-replaces the default list for that skill. Delete the user file to reset.
+The file does not exist on a fresh install; it is created the first time you
+change a link. An empty array for a skill disables links for that skill. Delete
+the file to reset. A link to an MCP server that is not in the current config is
+ignored: no badge and no connect attempt.
+
+`context7-mcp` is not linked because no `context7` server is configured.
+`ghidra-mcp` is unrelated to REA (REA uses its own Ghidra install).
+
+The bottom of the Skills tab shows the installed `VERSION`, using the same
+muted 11px style as the DeepSeek panel.
 
 Version 1.1 replaces the first DOM-injection version. Running `install` also
 strips the old `skills-panel.js` injection and deletes the old file.
@@ -87,6 +87,6 @@ re-run the installers of the other addons).
 - `apply.js` - installer (install / remove / restore-all / status / verify).
 - `skills-scan.mjs` - discovery and toggle logic, testable standalone.
 - `skills-main.js` - main-process IPC (`skills-list`, `skills-toggle`).
-- `links.json` - default skill to MCP server mapping (overridable from the UI).
+- `links.json` - bundled defaults (empty) for skill to MCP server mapping.
 - `test_selfcheck.mjs` - runnable check: `node test_selfcheck.mjs`.
 - `VERSION` - addon version.
