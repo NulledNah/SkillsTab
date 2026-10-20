@@ -28,7 +28,7 @@ file manually).
 
 ### Link from the UI
 
-Click a skill row (or the `▾` next to its name): the row expands into the
+Click a skill row (or the `▾` to the right of its name): the row expands into the
 "Linked MCP:" panel with every configured MCP server. Toggle the ones you
 want; changes are saved immediately, no restart needed (they affect the
 cascade and the badge, not the model context). The switch at the right is the
