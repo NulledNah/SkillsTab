@@ -16,9 +16,27 @@ the model context.
   panels. The pristine chunk is kept in the asar as `*.js.orig` for `remove`.
 - The opencode server loads skills once at startup, so a toggle applies after a
   restart. The panel shows a **Riavvia** button that relaunches the app.
+- `links.json` maps a skill to the MCP servers it works with. Toggling the
+  skill also connects/disconnects those servers immediately (the skill itself
+  still applies at restart). If an MCP is turned off from the MCP tab, the
+  skill shows a `MCP <name> off` badge: click it to reconnect. The MCP tab
+  toggle stays runtime-only; no config file is rewritten.
+
+Current links:
+
+```json
+{
+  "reverse-engineer-anything": ["rea"],
+  "closedloop-ux": ["playwright"]
+}
+```
+
+`context7-mcp` is not linked because no `context7` server is configured.
+`ghidra-mcp` is unrelated to REA (REA uses its own Ghidra install).
 
 Version 1.1 replaces the first DOM-injection version. Running `install` also
 strips the old `skills-panel.js` injection and deletes the old file.
+Version 1.2 adds `links.json`, the skill → MCP cascade and the reconnect badge.
 
 ## Install
 
@@ -56,5 +74,6 @@ re-run the installers of the other addons).
 - `apply.js` - installer (install / remove / restore-all / status / verify).
 - `skills-scan.mjs` - discovery and toggle logic, testable standalone.
 - `skills-main.js` - main-process IPC (`skills-list`, `skills-toggle`).
+- `links.json` - skill to MCP server mapping.
 - `test_selfcheck.mjs` - runnable check: `node test_selfcheck.mjs`.
 - `VERSION` - addon version.

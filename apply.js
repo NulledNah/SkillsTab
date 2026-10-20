@@ -38,6 +38,7 @@ const REMOVED_SENTINEL = "/* oc-addon-removed: skills */";
 const OLD_PANEL = "skills-panel.js";
 
 const SCAN_PARTS = ["out", "main", "skills-scan.mjs"];
+const LINKS_PARTS = ["out", "main", "links.json"];
 const MAIN_PARTS = ["out", "main", "skills-main.js"];
 const PRELOAD_PARTS = ["out", "preload", "index.js"];
 const INDEX_PARTS = ["out", "renderer", "index.html"];
@@ -61,14 +62,18 @@ const LOADER_APPEND =
   'try { await import("./skills-main.js"); } catch (e) { /* skills addon not installed */ }\n';
 
 const POPOVER_TEMPLATES = `/* oc-skills-tab */
-var _tmpl$skills = /* @__PURE__ */ template('<button type=button class="flex items-center gap-2 w-full min-h-8 pl-3 pr-2 py-1 rounded-md hover:bg-surface-raised-base-hover transition-colors text-left"><div></div><span class="flex flex-col min-w-0 flex-1"><span class="flex items-center gap-2 min-w-0"><span class="text-14-regular truncate"></span></span></span><div></div></button>'), _tmpl$restart = /* @__PURE__ */ template('<div class="flex items-center justify-between gap-2 mt-3 pt-2 border-t border-border-weak-base"><span class="text-12-regular text-text-weak">Riavvia OpenCode per applicare.</span><button type=button class="text-12-regular text-text-base hover:underline">Riavvia</button></div>');
+var _tmpl$skills = /* @__PURE__ */ template('<button type=button class="flex items-center gap-2 w-full min-h-8 pl-3 pr-2 py-1 rounded-md hover:bg-surface-raised-base-hover transition-colors text-left"><div></div><span class="flex flex-col min-w-0 flex-1"><span class="flex items-center gap-2 min-w-0"><span class="text-14-regular truncate"></span><span data-skill-mcp class="text-11-regular text-text-weak truncate"></span></span></span><div></div></button>'), _tmpl$restart = /* @__PURE__ */ template('<div class="flex items-center justify-between gap-2 mt-3 pt-2 border-t border-border-weak-base"><span class="text-12-regular text-text-weak">Riavvia per applicare la skill.</span><button type=button class="text-12-regular text-text-base hover:underline">Riavvia</button></div>');
 
 `;
 
 const POPOVER_COMPONENTS = `function SkillRow(props) {
-  var _el$ = _tmpl$skills(), _dot = _el$.firstChild, _label = _dot.nextSibling, _line = _label.firstChild, _name = _line.firstChild, _box = _label.nextSibling;
+  var _el$ = _tmpl$skills(), _dot = _el$.firstChild, _label = _dot.nextSibling, _line = _label.firstChild, _name = _line.firstChild, _badge = _name.nextSibling, _box = _label.nextSibling;
   _el$.$$click = () => props.onToggle(props.item);
   _box.$$click = (event) => event.stopPropagation();
+  _badge.$$click = (event) => {
+    event.stopPropagation();
+    props.onReconnect(props.item);
+  };
   insert(_name, () => props.item.name);
   insert(_box, createComponent(Switch, {
     get checked() {
@@ -87,6 +92,10 @@ const POPOVER_COMPONENTS = `function SkillRow(props) {
       "text-text-base": props.item.enabled,
       "text-text-weak": !props.item.enabled
     }, _p$.n);
+    var off = (props.item.mcp || []).filter((name) => props.mcp?.[name]?.status !== "connected");
+    var text = props.item.enabled && off.length ? "MCP " + off.join(", ") + " off" : "";
+    _badge.textContent = text;
+    _badge.title = text ? "Clicca per riconnettere" : "";
     return _p$;
   }, {
     t: void 0,
@@ -143,8 +152,14 @@ function SkillsContent(props) {
               },
               children: (item) => createComponent(SkillRow, {
                 item,
+                get mcp() {
+                  return props.mcp;
+                },
                 get onToggle() {
                   return props.onToggle;
+                },
+                get onReconnect() {
+                  return props.onReconnect;
                 }
               })
             })];
@@ -197,9 +212,23 @@ const POPOVER_STATE = `  const settings = useSettings();
     setSkillsState("busy", true);
     bridge.skillsToggle(item.path).then((result) => {
       setSkillsState("busy", false);
-      if (result && result.ok) setSkillsState({ items: result.skills || skillsState.items, needsRestart: true, error: "" });
-      else setSkillsState("error", "Errore: " + ((result && result.error) || "sconosciuto"));
+      if (result && result.ok) {
+        const next = (result.skills || []).find((skill) => skill.name === item.name && skill.dir === item.dir) || item;
+        setSkillsState({ items: result.skills || skillsState.items, needsRestart: true, error: "" });
+        syncLinkedMcp(next, next.enabled);
+      } else setSkillsState("error", "Errore: " + ((result && result.error) || "sconosciuto"));
     }).catch((error) => setSkillsState({ busy: false, error: "Errore: " + error }));
+  };
+  const syncLinkedMcp = (item, enabled) => {
+    for (const name of item.mcp || []) {
+      const connected = sync.data.mcp?.[name]?.status === "connected";
+      if (connected !== enabled) toggleMcp.mutate(name);
+    }
+  };
+  const reconnectLinked = (item) => {
+    for (const name of item.mcp || []) {
+      if (sync.data.mcp?.[name]?.status !== "connected") toggleMcp.mutate(name);
+    }
   };
   createEffect(() => {
     if (props.shown()) loadSkills();
@@ -226,8 +255,14 @@ const POPOVER_CONTENT = `
               get state() {
                 return skillsState;
               },
+              get mcp() {
+                return sync.data.mcp;
+              },
               get onToggle() {
                 return toggleSkillRow;
+              },
+              get onReconnect() {
+                return reconnectLinked;
               }
             });
           }
@@ -475,7 +510,8 @@ function install(args) {
 
   const scanSrc = path.join(__dirname, "skills-scan.mjs");
   const mainSrc = path.join(__dirname, "skills-main.js");
-  for (const f of [scanSrc, mainSrc]) {
+  const linksSrc = path.join(__dirname, "links.json");
+  for (const f of [scanSrc, mainSrc, linksSrc]) {
     if (!fs.existsSync(f)) {
       console.error(path.basename(f) + " non trovato accanto ad apply.js");
       process.exit(1);
@@ -509,6 +545,7 @@ function install(args) {
 
   const scanBuf = fs.readFileSync(scanSrc);
   const mainBuf = fs.readFileSync(mainSrc);
+  const linksBuf = fs.readFileSync(linksSrc);
   const chunkBuf = Buffer.from(patchPopover(baseChunk.toString("utf8")), "utf8");
   const preloadBuf = Buffer.from(patchPreload(preloadRaw.toString("utf8"), true), "utf8");
   const indexBuf = Buffer.from(stripIndex(indexRaw.toString("utf8")), "utf8");
@@ -535,6 +572,7 @@ function install(args) {
   };
   add(SCAN_PARTS, scanBuf);
   add(MAIN_PARTS, mainBuf);
+  add(LINKS_PARTS, linksBuf);
   if (!origRaw) add(ORIG_PARTS, baseChunk);
   add(CHUNK_PARTS, chunkBuf);
   if (loaderBuf) add(LOADER_PARTS, loaderBuf);
@@ -554,7 +592,7 @@ function install(args) {
   const check = readHeader(tmp);
   const checkChunk = readEntry(tmp, check.json, check.dataStart, CHUNK_PARTS).toString("utf8");
   const checkLoader = existingLoader(tmp, check) || "";
-  if (!nodeAt(check.json, MAIN_PARTS) || !nodeAt(check.json, SCAN_PARTS)) {
+  if (!nodeAt(check.json, MAIN_PARTS) || !nodeAt(check.json, SCAN_PARTS) || !nodeAt(check.json, LINKS_PARTS)) {
     throw new Error("validazione del nuovo app.asar fallita");
   }
   if (!checkChunk.includes(CHUNK_MARKER) || !checkChunk.includes("SkillsContent")) {
@@ -712,6 +750,7 @@ function verify(args) {
   if (!nodeAt(header.json, LOADER_PARTS)) throw new Error("oc-addons.js (loader) mancante");
   if (!loader.includes(SKILLS_IMPORT)) throw new Error("loader: import skills-main mancante");
   if (!nodeAt(header.json, SCAN_PARTS)) throw new Error("skills-scan.mjs mancante");
+  if (!nodeAt(header.json, LINKS_PARTS)) throw new Error("links.json mancante");
   if (!preload.includes("skillsList")) throw new Error("preload: bridge skills mancante");
   if (index.includes("skills-panel.js")) throw new Error("index.html: vecchio script addon ancora presente");
   if (!main || !main.toString("utf8").includes("skills-list")) throw new Error("skills-main.js mancante/invalido");

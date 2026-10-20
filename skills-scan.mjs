@@ -117,6 +117,13 @@ export function scanSkills(roots) {
     .sort((a, b) => a.name.localeCompare(b.name) || a.path.localeCompare(b.path));
 }
 
+export function withLinks(skills, links) {
+  return skills.map((skill) => ({
+    ...skill,
+    mcp: Array.isArray(links && links[skill.name]) ? links[skill.name] : [],
+  }));
+}
+
 export function toggleSkill(skills, path) {
   const item = skills.find((skill) => skill.path === path);
   if (!item) throw new Error("skill non trovata: " + path);

@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, existsSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { scanSkills, toggleSkill, parseSkillFile } from "./skills-scan.mjs";
+import { scanSkills, toggleSkill, parseSkillFile, withLinks } from "./skills-scan.mjs";
 
 function skillFile(dir, name, body) {
   mkdirSync(join(dir, name), { recursive: true });
@@ -42,6 +42,11 @@ function run() {
     assert.equal(skills.find((s) => s.name === "beta").description, "Multi line description.");
     assert.equal(skills.filter((s) => s.name === "dupe").length, 2);
     assert.ok(!names.includes("ghost"), "nested non-SKILL.md must be ignored");
+
+    const linked = withLinks(skills, { alpha: ["rea"], dupe: ["playwright"] });
+    assert.deepEqual(linked.find((s) => s.name === "alpha").mcp, ["rea"]);
+    assert.deepEqual(linked.find((s) => s.name === "beta").mcp, []);
+    assert.deepEqual(withLinks(skills, undefined).find((s) => s.name === "alpha").mcp, []);
 
     const alpha = skills.find((s) => s.name === "alpha");
     const paused = toggleSkill(skills, alpha.path);
