@@ -28,9 +28,14 @@ file manually).
 
 ### Link from the UI
 
-Click the `MCP ▾` chip next to the skill name: a small panel opens with every
-configured MCP server. Toggle the ones you want; changes are saved immediately, no restart
-needed (they affect the cascade and the badge, not the model context).
+Click a skill row (or the `▾` next to its name): the row expands into the
+"Linked MCP:" panel with every configured MCP server. Toggle the ones you
+want; changes are saved immediately, no restart needed (they affect the
+cascade and the badge, not the model context). The switch at the right is the
+skill on/off; clicking the row no longer toggles the skill.
+
+UI strings are localized with the same method as the DeepSeek panel: system
+language first, then the app language, English fallback (it/en).
 
 User links are stored in:
 

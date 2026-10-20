@@ -62,21 +62,65 @@ const LOADER_APPEND =
   'try { await import("./skills-main.js"); } catch (e) { /* skills addon not installed */ }\n';
 
 const POPOVER_TEMPLATES = `/* oc-skills-tab */
-var _tmpl$skills = /* @__PURE__ */ template('<div class="flex flex-col"><button type=button class="flex items-center gap-2 w-full min-h-8 pl-3 pr-2 py-1 rounded-md hover:bg-surface-raised-base-hover transition-colors text-left"><div></div><span class="flex flex-col min-w-0 flex-1"><span class="flex items-center gap-2 min-w-0"><span class="text-14-regular truncate"></span><span data-skill-mcp class="text-11-regular text-text-weak truncate"></span><span data-skill-link class="text-11-regular text-text-weak shrink-0 rounded border border-border-weak-base px-1.5 hover:text-text-base" style="line-height:16px">MCP ▾</span></span></span><div></div></button><div data-skill-links class="flex flex-col gap-1 px-3 pb-2" style="display:none"></div></div>'), _tmpl$mcp = /* @__PURE__ */ template('<div class="flex items-center justify-between gap-2 min-h-7 pl-2 pr-1 rounded-md hover:bg-surface-raised-base-hover cursor-pointer"><span class="text-12-regular text-text-base truncate"></span><div></div></div>'), _tmpl$version = /* @__PURE__ */ template('<div class="flex justify-center pt-2" style="color:#8a8a8a;font-size:11px;font-variant-numeric:tabular-nums;letter-spacing:.02em">v__SKILLS_VERSION__</div>'), _tmpl$restart = /* @__PURE__ */ template('<div class="flex items-center justify-between gap-2 mt-3 pt-2 border-t border-border-weak-base"><span class="text-12-regular text-text-weak">Riavvia per applicare la skill.</span><button type=button class="text-12-regular text-text-base hover:underline">Riavvia</button></div>');
+var _tmpl$skills = /* @__PURE__ */ template('<div class="flex flex-col"><button type=button class="flex items-center gap-2 w-full min-h-8 pl-3 pr-2 py-1 rounded-md hover:bg-surface-raised-base-hover transition-colors text-left"><div></div><span class="flex flex-col min-w-0 flex-1"><span class="flex items-center gap-2 min-w-0"><span data-skill-caret class="shrink-0 text-text-weak" style="font-size:10px;line-height:1;transition:transform .15s">▾</span><span class="text-14-regular truncate"></span><span data-skill-mcp class="text-11-regular text-text-weak truncate"></span></span></span><div></div></button><div data-skill-links class="flex flex-col gap-1 px-3 pb-2" style="display:none"></div></div>'), _tmpl$mcp = /* @__PURE__ */ template('<div class="flex items-center justify-between gap-2 min-h-7 pl-2 pr-1 rounded-md hover:bg-surface-raised-base-hover cursor-pointer"><span class="text-12-regular text-text-base truncate"></span><div></div></div>'), _tmpl$mcphead = /* @__PURE__ */ template('<div class="text-11-regular text-text-weaker px-2 pt-1"></div>'), _tmpl$version = /* @__PURE__ */ template('<div class="flex justify-center pt-2" style="color:#8a8a8a;font-size:11px;font-variant-numeric:tabular-nums;letter-spacing:.02em">v__SKILLS_VERSION__</div>'), _tmpl$restart = /* @__PURE__ */ template('<div class="flex items-center justify-between gap-2 mt-3 pt-2 border-t border-border-weak-base"><span class="text-12-regular text-text-weak">Riavvia per applicare la skill.</span><button type=button class="text-12-regular text-text-base hover:underline">Riavvia</button></div>');
 
 `;
 
-const POPOVER_COMPONENTS = `function SkillRow(props) {
-  var _wrap = _tmpl$skills(), _el$ = _wrap.firstChild, _dot = _el$.firstChild, _label = _dot.nextSibling, _line = _label.firstChild, _name = _line.firstChild, _badge = _name.nextSibling, _link = _badge.nextSibling, _box = _label.nextSibling, _editor = _wrap.lastChild;
-  _el$.$$click = () => props.onToggle(props.item);
+const POPOVER_COMPONENTS = `var LOCALE = (function () {
+  function pick(v) {
+    v = String(v || "").toLowerCase();
+    if (v.indexOf("it") === 0) return "it";
+    if (v.indexOf("en") === 0) return "en";
+    return null;
+  }
+  return pick(navigator.language) || pick(document.documentElement && document.documentElement.getAttribute("lang")) || "en";
+})();
+var I18N = {
+  en: {
+    loading: "Loading...",
+    no_skills: "No skills found",
+    no_mcp: "No MCP server configured.",
+    mcp_linked: "Linked MCP:",
+    restart_hint: "Restart to apply the skill.",
+    restart: "Restart",
+    reconnect_hint: "Click to reconnect",
+    mcp_off: "MCP {names} off",
+    error: "Error: ",
+    bridge_missing: "Skills bridge missing.",
+    unknown: "unknown"
+  },
+  it: {
+    loading: "Caricamento...",
+    no_skills: "Nessuna skill trovata",
+    no_mcp: "Nessun server MCP configurato.",
+    mcp_linked: "MCP collegati:",
+    restart_hint: "Riavvia per applicare la skill.",
+    restart: "Riavvia",
+    reconnect_hint: "Clicca per riconnettere",
+    mcp_off: "MCP {names} spento",
+    error: "Errore: ",
+    bridge_missing: "Bridge skills mancante.",
+    unknown: "sconosciuto"
+  }
+};
+function t(key) {
+  var dict = I18N[LOCALE] || I18N.en;
+  if (dict[key] != null) return dict[key];
+  if (I18N.en[key] != null) return I18N.en[key];
+  return key;
+}
+
+function SkillRow(props) {
+  var _wrap = _tmpl$skills(), _el$ = _wrap.firstChild, _dot = _el$.firstChild, _label = _dot.nextSibling, _line = _label.firstChild, _caret = _line.firstChild, _name = _caret.nextSibling, _badge = _name.nextSibling, _box = _label.nextSibling, _editor = _wrap.lastChild;
+  _el$.$$click = () => {
+    var open = _editor.style.display === "none";
+    _editor.style.display = open ? "" : "none";
+    _caret.style.transform = open ? "rotate(180deg)" : "";
+  };
   _box.$$click = (event) => event.stopPropagation();
   _badge.$$click = (event) => {
     event.stopPropagation();
     props.onReconnect(props.item);
-  };
-  _link.$$click = (event) => {
-    event.stopPropagation();
-    _editor.style.display = _editor.style.display === "none" ? "" : "none";
   };
   insert(_name, () => props.item.name);
   insert(_box, createComponent(Switch, {
@@ -85,10 +129,13 @@ const POPOVER_COMPONENTS = `function SkillRow(props) {
     },
     onChange: () => props.onToggle(props.item)
   }));
+  var _head = _tmpl$mcphead();
+  _head.textContent = t("mcp_linked");
+  _editor.appendChild(_head);
   var names = props.mcpNames || [];
   if (!names.length) {
     var _empty = _tmpl$7();
-    insert(_empty, () => "Nessun server MCP configurato.");
+    insert(_empty, () => t("no_mcp"));
     _empty.style.paddingLeft = "8px";
     _editor.appendChild(_empty);
   } else {
@@ -118,9 +165,9 @@ const POPOVER_COMPONENTS = `function SkillRow(props) {
       "text-text-weak": !props.item.enabled
     }, _p$.n);
     var off = (props.item.mcp || []).filter((name) => props.mcp?.[name] && props.mcp[name].status !== "connected");
-    var text = props.item.enabled && off.length ? "MCP " + off.join(", ") + " off" : "";
+    var text = props.item.enabled && off.length ? t("mcp_off").replace("{names}", off.join(", ")) : "";
     _badge.textContent = text;
-    _badge.title = text ? "Clicca per riconnettere" : "";
+    _badge.title = text ? t("reconnect_hint") : "";
     return _p$;
   }, {
     t: void 0,
@@ -139,7 +186,7 @@ function SkillsContent(props) {
       get fallback() {
         return (() => {
           var _el$f = _tmpl$7();
-          insert(_el$f, () => "Caricamento...");
+          insert(_el$f, () => t("loading"));
           return _el$f;
         })();
       },
@@ -167,7 +214,7 @@ function SkillsContent(props) {
               get children() {
                 return (() => {
                   var _el$n = _tmpl$7();
-                  insert(_el$n, () => "Nessuna skill trovata");
+                  insert(_el$n, () => t("no_skills"));
                   return _el$n;
                 })();
               }
@@ -205,6 +252,8 @@ function SkillsContent(props) {
       get children() {
         return (() => {
           var _el$r = _tmpl$restart();
+          _el$r.firstChild.textContent = t("restart_hint");
+          _el$r.lastChild.textContent = t("restart");
           _el$r.lastChild.$$click = () => {
             if (window.api && typeof window.api.relaunch === "function") window.api.relaunch();
           };
@@ -230,13 +279,13 @@ const POPOVER_STATE = `  const settings = useSettings();
   const loadSkills = () => {
     const bridge = window.api || {};
     if (!bridge.skillsList) {
-      setSkillsState({ loaded: true, error: "Bridge skills mancante." });
+      setSkillsState({ loaded: true, error: t("bridge_missing") });
       return;
     }
     bridge.skillsList().then((result) => {
       if (result && result.ok) setSkillsState({ items: result.skills || [], loaded: true, error: "" });
-      else setSkillsState({ loaded: true, error: "Errore: " + ((result && result.error) || "sconosciuto") });
-    }).catch((error) => setSkillsState({ loaded: true, error: "Errore: " + error }));
+      else setSkillsState({ loaded: true, error: t("error") + ((result && result.error) || t("unknown")) });
+    }).catch((error) => setSkillsState({ loaded: true, error: t("error") + error }));
   };
   const toggleSkillRow = (item) => {
     const bridge = window.api || {};
@@ -248,7 +297,7 @@ const POPOVER_STATE = `  const settings = useSettings();
         const next = (result.skills || []).find((skill) => skill.name === item.name && skill.dir === item.dir) || item;
         setSkillsState({ items: result.skills || skillsState.items, needsRestart: true, error: "" });
         syncLinkedMcp(next, next.enabled);
-      } else setSkillsState("error", "Errore: " + ((result && result.error) || "sconosciuto"));
+      } else setSkillsState("error", t("error") + ((result && result.error) || t("unknown")));
     }).catch((error) => setSkillsState({ busy: false, error: "Errore: " + error }));
   };
   const syncLinkedMcp = (item, enabled) => {
@@ -271,7 +320,7 @@ const POPOVER_STATE = `  const settings = useSettings();
     const linked = (item.mcp || []).indexOf(name) < 0;
     bridge.skillsLink({ skill: item.name, mcp: name, linked }).then((result) => {
       if (!result || !result.ok) {
-        setSkillsState("error", "Errore: " + ((result && result.error) || "sconosciuto"));
+        setSkillsState("error", t("error") + ((result && result.error) || t("unknown")));
         return;
       }
       const next = (result.skills || []).find((skill) => skill.name === item.name && skill.dir === item.dir);
@@ -279,7 +328,7 @@ const POPOVER_STATE = `  const settings = useSettings();
       const index = skillsState.items.findIndex((skill) => skill.name === item.name && skill.dir === item.dir);
       if (index >= 0) setSkillsState("items", index, "mcp", next.mcp || []);
       setSkillsState("error", "");
-    }).catch((error) => setSkillsState("error", "Errore: " + error));
+    }).catch((error) => setSkillsState("error", t("error") + error));
   };
   createEffect(() => {
     if (props.shown()) loadSkills();
