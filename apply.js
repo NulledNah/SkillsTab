@@ -263,8 +263,7 @@ function SkillsContent(props) {
 
 `;
 
-const POPOVER_STATE = `  const settings = useSettings();
-  const [skillsState, setSkillsState] = createStore({
+const POPOVER_STATE = `  const [skillsState, setSkillsState] = createStore({
     items: [],
     loaded: false,
     error: "",
@@ -297,7 +296,7 @@ const POPOVER_STATE = `  const settings = useSettings();
   };
   const syncLinkedMcp = (item, enabled) => {
     for (const name of item.mcp || []) {
-      const status = sync.data.mcp?.[name]?.status;
+      const status = sync().data.mcp?.[name]?.status;
       if (!status) continue;
       const connected = status === "connected";
       if (connected !== enabled) toggleMcp.mutate(name);
@@ -305,8 +304,8 @@ const POPOVER_STATE = `  const settings = useSettings();
   };
   const reconnectLinked = (item) => {
     for (const name of item.mcp || []) {
-      if (!sync.data.mcp?.[name]) continue;
-      if (sync.data.mcp[name].status !== "connected") toggleMcp.mutate(name);
+      if (!sync().data.mcp?.[name]) continue;
+      if (sync().data.mcp[name].status !== "connected") toggleMcp.mutate(name);
     }
   };
   const linkSkill = (item, name) => {
@@ -329,8 +328,7 @@ const POPOVER_STATE = `  const settings = useSettings();
     if (props.shown()) loadSkills();
   });`;
 
-const POPOVER_TRIGGER = `
-            }), createComponent(Tabs.Trigger, {
+const POPOVER_TRIGGER = `            }), createComponent(Tabs.Trigger, {
               value: "skills",
               "data-slot": "tab",
               "class": "text-12-regular",
@@ -340,10 +338,10 @@ const POPOVER_TRIGGER = `
                   return count > 0 ? count + " " : "";
                 }), memo(() => "Skills")];
               }
-            })];`;
+            })];
+`;
 
-const POPOVER_CONTENT = `
-        }), createComponent(Tabs.Content, {
+const POPOVER_CONTENT = `        }), createComponent(Tabs.Content, {
           value: "skills",
           get children() {
             return createComponent(SkillsContent, {
@@ -351,7 +349,7 @@ const POPOVER_CONTENT = `
                 return skillsState;
               },
               get mcp() {
-                return sync.data.mcp;
+                return sync().data.mcp;
               },
               get mcpNames() {
                 return mcpNames();
@@ -578,8 +576,7 @@ function patchPopover(code) {
   );
   code = replaceOnce(
     code,
-    `  const settings = useSettings();
-  createEffect(() => {
+    `  createEffect(() => {
     if (!props.shown()) return;
   });`,
     POPOVER_STATE,
@@ -587,22 +584,28 @@ function patchPopover(code) {
   );
   code = replaceOnce(
     code,
-    `                return [memo(() => memo(() => pluginCount() > 0)() ? \`\${pluginCount()} \` : ""), memo(() => language.t("status.popover.tab.plugins"))];
-              }
-            })];
-`,
-    `                return [memo(() => memo(() => pluginCount() > 0)() ? \`\${pluginCount()} \` : ""), memo(() => language.t("status.popover.tab.plugins"))];
-              }` + POPOVER_TRIGGER + "\n",
+    `            })];\n          }\n        }), memo(`,
+    POPOVER_TRIGGER + `          }\n        }), memo(`,
     "trigger"
   );
   code = replaceOnce(
     code,
-    `            return _el$11;
+    `                return _el$11;
+              }
+            });
           }
         })];
-`,
-    `            return _el$11;
-          }` + POPOVER_CONTENT + "\n",
+      }
+    }));`,
+    `                return _el$11;
+              }
+            });
+          }
+` +
+      POPOVER_CONTENT +
+      `
+      }
+    }));`,
     "content"
   );
   return code;

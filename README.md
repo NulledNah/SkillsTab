@@ -9,6 +9,16 @@ Plugins). Turn each skill on or off and link it to the MCP servers it needs.
   <img src="img/before-after.png" width="640" alt="Pannello prima e dopo: tab Skills con gli switch per ogni skill">
 </p>
 
+## Compatibility
+
+| OpenCode desktop | SkillsTab |
+| --- | --- |
+| 1.19.4 (new UI) | **v1.4.3** |
+| previous UI (tested on 1.16.x) | **v1.4.2** |
+
+The installer only patches the status popover chunk. If `install` reports the
+chunk or a marker as not found, use the release that matches your OpenCode UI.
+
 ## Install
 
 Close OpenCode, then from this folder:
